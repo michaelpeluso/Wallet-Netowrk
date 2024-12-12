@@ -64,6 +64,7 @@ CREATE TABLE REQUEST_TRANSACTION (
 CREATE TABLE REQUEST_FROM (
     RId INT NOT NULL, -- Request ID
     Identifier VARCHAR(100) NOT NULL, -- Recipient's electronic address
+    Percentage DECIMAL(5, 2), -- Percentage of amount
     PRIMARY KEY (RId, Identifier),
     FOREIGN KEY (RId) REFERENCES REQUEST_TRANSACTION(RId), -- Request reference
     FOREIGN KEY (Identifier) REFERENCES ELEC_ADDRESS(Identifier) -- Recipient reference

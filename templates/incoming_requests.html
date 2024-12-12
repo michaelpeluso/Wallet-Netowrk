@@ -1,0 +1,37 @@
+{% extends "base.html" %} {% block content %}
+<h2>Incoming Requests</h2>
+{% if requests %}
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Amount</th>
+            <th>Memo</th>
+            <th>Date</th>
+            <th>Requester</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for r in requests %}
+        <tr>
+            <td>{{ r.RId }}</td>
+            <td>${{ "%.2f"|format(r.Amount) }}</td>
+            <td>{{ r.Memo }}</td>
+            <td>{{ r.DateTime }}</td>
+            <td>{{ r.RequesterSSN }}</td>
+            <td>
+                <form method="POST" action="{{ url_for('accept_request', rid=r.RId) }}" style="display: inline">
+                    <button type="submit" class="btn btn-sm btn-success">Accept</button>
+                </form>
+                <form method="POST" action="{{ url_for('deny_request', rid=r.RId) }}" style="display: inline">
+                    <button type="submit" class="btn btn-sm btn-danger">Deny</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No incoming requests.</p>
+{% endif %} {% endblock %}

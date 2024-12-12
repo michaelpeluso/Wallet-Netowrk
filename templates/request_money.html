@@ -1,18 +1,18 @@
 {% extends "base.html" %} {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <h2 class="mt-4">Request Money</h2>
-        <form method="POST" action="{{ url_for('request_money') }}">
-            <div class="mb-3">
-                <label for="amount" class="form-label">Amount</label>
-                <input type="number" step="0.01" class="form-control" id="amount" name="amount" required />
-            </div>
-            <div class="mb-3">
-                <label for="memo" class="form-label">Memo (optional)</label>
-                <input type="text" class="form-control" id="memo" name="memo" />
-            </div>
-            <button type="submit" class="btn btn-success">Confirm</button>
-        </form>
+<h2>Request Money</h2>
+<form method="POST">
+    <div class="mb-3">
+        <label for="recipient" class="form-label">Recipient Identifier (Email or Phone)</label>
+        <input type="text" class="form-control" name="recipient" id="recipient" required />
     </div>
-</div>
+    <div class="mb-3">
+        <label for="amount" class="form-label">Amount ($)</label>
+        <input type="number" step="0.01" class="form-control" name="amount" id="amount" required />
+    </div>
+    <div class="mb-3">
+        <label for="memo" class="form-label">Memo (optional)</label>
+        <input type="text" class="form-control" name="memo" id="memo" />
+    </div>
+    <button type="submit" class="btn btn-primary">Request</button>
+</form>
 {% endblock %}

@@ -37,7 +37,7 @@ def signup():
 
         # validate ssn
         if not ssn_pattern.match(ssn):
-            flash('Invalid SSN format.', 'danger')
+            flash('Invalid ssn format.', 'danger')
             return redirect(url_for('signup'))
         
         # validate name
@@ -58,18 +58,6 @@ def signup():
         
         # interact with database
         try: 
-            # check if SSN already exists
-            existing_ssn = fetch_query("select * from WALLET_ACCOUNT where SSN=%s", (ssn,))
-            if existing_ssn:
-                flash('SSN already in use.', 'danger')
-                return redirect(url_for('signup'))
-            
-            # check if email already exists
-            existing_email = fetch_query("select * from EMAIL_ADDRESS where EmailAdd=%s", (email,))
-            if existing_email:
-                flash('Email already in use.', 'danger')
-                return redirect(url_for('signup'))
-            
             # check if phone already exists
             existing_phone = fetch_query("select * from WALLET_ACCOUNT where PhoneNo=%s", (phone_digits,))
             if existing_phone:
@@ -80,26 +68,26 @@ def signup():
             ea_phone = fetch_query("select * from ELEC_ADDRESS where Identifier=%s", (phone_digits,))
             if not ea_phone:
                 execute_query("insert into ELEC_ADDRESS (Identifier, Verified, Type) values (%s, %s, %s)",
-                              (phone_digits, False, 'Phone'))
+                            (phone_digits, False, 'Phone'))
             
             ea_email = fetch_query("select * from ELEC_ADDRESS where Identifier=%s", (email,))
             if not ea_email:
                 execute_query("insert into ELEC_ADDRESS (Identifier, Verified, Type) values (%s, %s, %s)",
-                              (email, False, 'Email'))
+                            (email, False, 'Email'))
             
             # insert wallet_account
             execute_query("""insert into WALLET_ACCOUNT (SSN, Name, PhoneNo, Balance, BankID, BANumber, BAVerified) 
                             values (%s, %s, %s, %s, %s, %s, %s)""", 
-                        (ssn, name, phone_digits, Decimal('0.00'), None, None, False))
+                        (ssn, name, phone_digits, 0.00, 'NULL', 'NULL', False))
         
-            # insert email_address
+        # insert email_address
             execute_query("insert into EMAIL_ADDRESS (EmailAdd, SSN, Verified) values (%s, %s, %s)", (email, ssn, False))
             flash('Signup successful!', 'success')
             return redirect(url_for('login'))
         except Exception as e:
             flash(str(e), "danger")
-    
-    return render_template('signup.html') 
+        
+    return render_template('signup.html')
 
 @app.route('/login', methods=['GET','POST'])
 def login():
@@ -241,7 +229,7 @@ def send_money():
                 flash('Insufficient funds.', 'danger')
                 return redirect(url_for('send_money'))
             
-            # check if recipient exists
+            # check if recipient exists and is verified
             recipient = fetch_query("select * from WALLET_ACCOUNT where SSN=(select SSN from EMAIL_ADDRESS where EmailAdd=%s) or PhoneNo=%s", (identifier, identifier))
             if not recipient:
                 flash('recipient not found or not verified', 'danger')
@@ -353,6 +341,130 @@ def manage_funds():
         return render_template('manage_funds.html', balance=balance)
     except Exception as e:
         flash(str(e), "danger")
+
+@app.route('/update_contacts', methods=['GET','POST'])
+def update_contacts():
+    # user can see current emails and phone, change them, and verify them
+    if 'ssn' not in session:
+        flash('login required', 'warning')
+        return redirect(url_for('login'))
+
+    ssn = session['ssn']
+
+    # fetch current email(s) and phone
+    try:
+        phone_data = fetch_query("""
+            select wa.PhoneNo, ea.Verified as PhoneVerified
+            from WALLET_ACCOUNT wa
+            left join ELEC_ADDRESS ea on wa.PhoneNo=ea.Identifier
+            where wa.SSN=%s
+        """, (ssn,))
+        phone_info = phone_data[0] if phone_data else None
+
+        emails_data = fetch_query("""
+            select e.EmailAdd, e.Verified
+            from EMAIL_ADDRESS e
+            where e.SSN=%s
+        """, (ssn,))
+
+        if request.method == 'POST':
+            # if user wants to add another email
+            new_email = request.form.get('new_email', '').strip()
+            if new_email and email_pattern.match(new_email):
+                # check if exists
+                exists = fetch_query("select * from EMAIL_ADDRESS where EmailAdd=%s", (new_email,))
+                if exists:
+                    flash('Email already in use', 'danger')
+                else:
+                    ea_email = fetch_query("select * from ELEC_ADDRESS where Identifier=%s", (new_email,))
+                    if not ea_email:
+                        execute_query("insert into ELEC_ADDRESS (Identifier, Verified, Type) values (%s, %s, %s)",(new_email, False, 'Email'))
+                    else:
+                        execute_query("update ELEC_ADDRESS set Verified=false where Identifier=%s", (new,))
+                    execute_query("insert into EMAIL_ADDRESS (EmailAdd, SSN, Verified) values (%s, %s, %s)",(new_email, ssn, False))
+                    flash('Email added', 'success')
+                return redirect(url_for('update_contacts'))
+
+            # if user wants to change phone
+            new_phone = request.form.get('new_phone', '').strip()
+            if new_phone:
+                new_digits = re.sub(r'\D', '', new_phone)
+                if phone_pattern.match(new_digits):
+                    # check if phone in use
+                    ph_exists = fetch_query("select * from WALLET_ACCOUNT where PhoneNo=%s", (new_digits,))
+                    if ph_exists:
+                        flash('Phone already in use', 'danger')
+                    else:
+                        # update phone in wallet_account
+                        # insert in elec_address if needed
+                        ea_p = fetch_query("select * from ELEC_ADDRESS where Identifier=%s", (new_digits,))
+                        if not ea_p:
+                            execute_query("insert into ELEC_ADDRESS (Identifier, Verified, Type) values (%s, %s, %s)",
+                                          (new_digits, False, 'Phone'))
+                        else:
+                            execute_query("update ELEC_ADDRESS set Verified=false where Identifier=%s", (new_digits,))
+                        execute_query("update WALLET_ACCOUNT set PhoneNo=%s where SSN=%s", (new_digits, ssn))
+                        flash('Phone updated', 'success')
+                else:
+                    flash('Invalid phone format', 'danger')
+                return redirect(url_for('update_contacts'))
+        
+        return render_template('update_contacts.html', phone_info=phone_info, emails=emails_data)
+    except Exception as e:
+        flash(str(e), 'danger')
+        return redirect(url_for('dashboard'))
+
+@app.route('/verify_contact/<identifier>')
+def verify_contact(identifier):
+    # verify the given identifier in ELEC_ADDRESS and EMAIL_ADDRESS if present
+    if 'ssn' not in session:
+        flash('login required', 'warning')
+        return redirect(url_for('login'))
+    try:
+        # verify in ELEC_ADDRESS
+        elec = fetch_query("select * from ELEC_ADDRESS where Identifier=%s", (identifier,))
+        if elec:
+            execute_query("update ELEC_ADDRESS set Verified=true where Identifier=%s", (identifier,))
+        
+        # if it's an email, also verify in EMAIL_ADDRESS
+        if email_pattern.match(identifier):
+            execute_query("update EMAIL_ADDRESS set Verified=true where EmailAdd=%s", (identifier,))
+        flash('Contact verified', 'success')
+    except Exception as e:
+        flash(str(e), 'danger')
+
+    return redirect(url_for('update_contacts'))
+
+@app.route('/delete_email/<email>', methods=['POST'])
+def delete_email(email):
+    # ensure user is logged in
+    if 'ssn' not in session:
+        flash('Login required.', 'warning')
+        return redirect(url_for('login'))
+    
+    ssn = session['ssn']
+    try:
+        # fetch all emails for the user
+        emails = fetch_query("SELECT EmailAdd FROM EMAIL_ADDRESS WHERE SSN=%s", (ssn,))
+        
+        # check if user has more than one email
+        if len(emails) <= 1:
+            flash('You must have at least one email address.', 'danger')
+            return redirect(url_for('update_contacts'))
+        
+        # verify the email belongs to the user
+        email_record = fetch_query("SELECT * FROM EMAIL_ADDRESS WHERE EmailAdd=%s AND SSN=%s", (email, ssn))
+        if not email_record:
+            flash('Email not found.', 'danger')
+            return redirect(url_for('update_contacts'))
+        
+        # delete the email
+        execute_query("DELETE FROM EMAIL_ADDRESS WHERE EmailAdd=%s AND SSN=%s", (email, ssn))
+        flash('Email deleted successfully.', 'success')
+    except Exception as e:
+        flash(f'Error deleting email: {str(e)}', 'danger')
+    
+    return redirect(url_for('update_contacts'))
 
 @app.route('/logout')
 def logout():
