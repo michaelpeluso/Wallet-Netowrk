@@ -380,7 +380,7 @@ def update_contacts():
                     if not ea_email:
                         execute_query("insert into ELEC_ADDRESS (Identifier, Verified, Type) values (%s, %s, %s)",(new_email, False, 'Email'))
                     else:
-                        execute_query("update ELEC_ADDRESS set Verified=false where Identifier=%s", (new,))
+                        execute_query("update ELEC_ADDRESS set Verified=false where Identifier=%s", (new_email,))
                     execute_query("insert into EMAIL_ADDRESS (EmailAdd, SSN, Verified) values (%s, %s, %s)",(new_email, ssn, False))
                     flash('Email added', 'success')
                 return redirect(url_for('update_contacts'))
