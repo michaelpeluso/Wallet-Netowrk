@@ -1,0 +1,22 @@
+{% extends "base.html" %} {% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <h2 class="mt-4">Manage Funds</h2>
+        <p>Current balance: <strong>${{ "%.2f"|format(balance) }}</strong></p>
+        <form method="POST" action="{{ url_for('manage_funds') }}">
+            <div class="mb-3">
+                <label for="amount" class="form-label">Amount</label>
+                <input type="number" step="0.01" class="form-control" id="amount" name="amount" required />
+            </div>
+            <div class="mb-3">
+                <label for="action" class="form-label">Action</label>
+                <select class="form-select" id="action" name="action" required>
+                    <option value="add">Add</option>
+                    <option value="subtract">Subtract</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-success">Submit</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

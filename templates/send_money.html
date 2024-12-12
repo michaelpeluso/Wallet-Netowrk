@@ -1,0 +1,22 @@
+{% extends "base.html" %} {% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <h2 class="mt-4">Send Money</h2>
+        <form method="POST" action="{{ url_for('send_money') }}">
+            <div class="mb-3">
+                <label for="identifier" class="form-label">Recipient email or phone</label>
+                <input type="text" class="form-control" id="identifier" name="identifier" required />
+            </div>
+            <div class="mb-3">
+                <label for="amount" class="form-label">Amount</label>
+                <input type="number" step="0.01" class="form-control" id="amount" name="amount" required />
+            </div>
+            <div class="mb-3">
+                <label for="memo" class="form-label">Memo (optional)</label>
+                <input type="text" class="form-control" id="memo" name="memo" />
+            </div>
+            <button type="submit" class="btn btn-success"><samp></samp>Confirm</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

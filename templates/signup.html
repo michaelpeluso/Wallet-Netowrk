@@ -1,0 +1,26 @@
+{% extends "base.html" %} {% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <h2 class="mt-4">Sign Up</h2>
+        <form method="POST" action="{{ url_for('signup') }}">
+            <div class="mb-3">
+                <label for="ssn" class="form-label">SSN</label>
+                <input type="text" class="form-control" id="ssn" name="ssn" required placeholder="123456789" />
+            </div>
+            <div class="mb-3">
+                <label for="name" class="form-label">Full name</label>
+                <input type="text" class="form-control" id="name" name="name" placeholder="John Doe" required />
+            </div>
+            <div class="mb-3">
+                <label for="email" class="form-label">Email address</label>
+                <input type="email" class="form-control" id="email" name="email" required placeholder="user@example.com" />
+            </div>
+            <div class="mb-3">
+                <label for="phone" class="form-label">Phone number</label>
+                <input type="text" class="form-control" id="phone" name="phone" required placeholder="5551234567" />
+            </div>
+            <button type="submit" class="btn btn-success">Sign Up</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
