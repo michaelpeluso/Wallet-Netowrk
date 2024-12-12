@@ -1,0 +1,13 @@
+{% extends "base.html" %} {% block content %}
+<div class="jumbotron mt-4">
+    <h1 class="display-4">Welcome to WALLET Payment Network</h1>
+    <p class="lead">Easily send and request money with your friends and family.</p>
+    <hr class="my-4" />
+    {% if 'ssn' not in session %}
+    <a class="btn btn-success btn-lg" href="{{ url_for('signup') }}" role="button">Sign Up</a>
+    <a class="btn btn-secondary btn-lg" href="{{ url_for('login') }}" role="button">Login</a>
+    {% else %}
+    <a class="btn btn-success btn-lg" href="{{ url_for('dashboard') }}" role="button">Go to Dashboard</a>
+    {% endif %}
+</div>
+{% endblock %}
