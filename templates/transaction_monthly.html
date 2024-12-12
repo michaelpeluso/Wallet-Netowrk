@@ -1,0 +1,33 @@
+{% extends "base.html" %} {% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <h2 class="mt-4">Monthly Transaction Summary</h2>
+        {% if summary %}
+        <table class="table table-bordered mt-4">
+            <thead>
+                <tr>
+                    <th>Month</th>
+                    <th>Total Sent</th>
+                    <th>Average Sent</th>
+                    <th>Total Received</th>
+                    <th>Average Received</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in summary %}
+                <tr>
+                    <td>{{ row['month'] }}</td>
+                    <td>${{ "%.2f"|format(row['total_sent']) }}</td>
+                    <td>${{ "%.2f"|format(row['avg_sent']) }}</td>
+                    <td>${{ "%.2f"|format(row['total_received']) }}</td>
+                    <td>${{ "%.2f"|format(row['avg_received']) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="mt-4">No data available.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

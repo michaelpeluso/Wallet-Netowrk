@@ -1,0 +1,50 @@
+<!-- templates/settings.html -->
+{% extends "base.html" %} {% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">Settings</h2>
+
+    <!-- Profile Information Card -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-secondary text-white">
+            <h5 class="mb-0"><i class="bi bi-person"></i> Profile Information</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('update_contacts') }}">
+                <!-- Full Name -->
+                <div class="mb-3">
+                    <label for="name" class="form-label"><i class="bi bi-pen"></i> Full Name</label>
+                    <input type="text" class="form-control" id="name" name="name" value="{{ user.Name }}" placeholder="Enter your full name" />
+                </div>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-pencil-square"></i> Update Name</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bank Information Card -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-secondary text-white">
+            <h5 class="mb-0"><i class="bi bi-bank2"></i> Bank Information</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('update_contacts') }}">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="bankid" class="form-label"><i class="bi bi-credit-card"></i> Bank ID</label>
+                        <input type="text" class="form-control" id="bankid" name="bankid" value="{{ user.BankID or '' }}" placeholder="Enter Bank ID" />
+                    </div>
+                    <div class="col-md-6">
+                        <label for="banum" class="form-label"><i class="bi bi-credit-card-2-front"></i> Bank Account Number</label>
+                        <input type="text" class="form-control" id="banum" name="banum" value="{{ user.BANumber or '' }}" placeholder="Enter Bank Account Number" />
+                        {% if user.BAVerified %}
+                        <div class="form-text text-success"><i class="bi bi-check-circle"></i> Bank account is verified.</div>
+                        {% else %}
+                        <div class="form-text text-warning"><i class="bi bi-exclamation-triangle"></i> Bank account is not verified.</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary me-2"><i class="bi bi-pencil-square"></i> Update Bank Information</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

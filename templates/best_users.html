@@ -1,0 +1,23 @@
+{% extends "base.html" %} {% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <h2 class="mt-4">Best Users</h2>
+        <div class="mt-4">
+            <h3>Top Sender</h3>
+            {% if best_senders %}
+            <p><strong>Total Sent:</strong> ${{ "%.2f"|format(best_senders[0]['total_sent']) }}</p>
+            {% else %}
+            <p>No data available.</p>
+            {% endif %}
+        </div>
+        <div class="mt-4">
+            <h3>Top Receiver</h3>
+            {% if best_receivers %}
+            <p><strong>Total Received:</strong> ${{ "%.2f"|format(best_receivers[0]['total_received']) }}</p>
+            {% else %}
+            <p>No data available.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

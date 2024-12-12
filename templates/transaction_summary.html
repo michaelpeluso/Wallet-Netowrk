@@ -1,0 +1,24 @@
+{% extends "base.html" %} {% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <h2 class="mt-4">Transaction Summary</h2>
+        <form method="POST" action="{{ url_for('transaction_summary') }}">
+            <div class="mb-3">
+                <label for="start_date" class="form-label">Start Date</label>
+                <input type="date" class="form-control" id="start_date" name="start_date" required />
+            </div>
+            <div class="mb-3">
+                <label for="end_date" class="form-label">End Date</label>
+                <input type="date" class="form-control" id="end_date" name="end_date" required />
+            </div>
+            <button type="submit" class="btn btn-primary">Get Summary</button>
+        </form>
+        {% if total_sent is not none and total_received is not none %}
+        <div class="mt-4">
+            <h3>Summary from {{ start_date }} to {{ end_date }}</h3>
+            <p><strong>Transaction Total:</strong> ${{ "%.2f"|format(total_sent) }}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

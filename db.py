@@ -4,7 +4,7 @@ from mysql.connector import Error
 def get_db_connection():
     try:
         conn = mysql.connector.connect(
-            host="10.192.146.79",
+            host="10.203.3.88",
             port=3306,
             database="wallet_network",
             user="user"

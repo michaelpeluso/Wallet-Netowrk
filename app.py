@@ -78,7 +78,7 @@ def signup():
             # insert wallet_account
             execute_query("""insert into WALLET_ACCOUNT (SSN, Name, PhoneNo, Balance, BankID, BANumber, BAVerified) 
                             values (%s, %s, %s, %s, %s, %s, %s)""", 
-                        (ssn, name, phone_digits, 0.00, 'NULL', 'NULL', False))
+                        (ssn, name, phone_digits, 0.00, None, None, False))
         
         # insert email_address
             execute_query("insert into EMAIL_ADDRESS (EmailAdd, SSN, Verified) values (%s, %s, %s)", (email, ssn, False))
@@ -242,6 +242,11 @@ def send_money():
             execute_query("""insert into SEND_TRANSACTION (Identifier, L_DTime, C_DTime, Memo, CReason, CType, Amount, SSN)
                             values (%s, now(), now(), %s, null, 'Completed', %s, %s)""", 
                         (identifier, memo, amount, ssn))
+
+            # deduct balance
+            execute_query("update WALLET_ACCOUNT set Balance=Balance+%s where SSN=%s", (amount, recipient[0]['SSN']))
+            
+
             flash('money sent', 'success')
             return redirect(url_for('dashboard'))
         
@@ -249,6 +254,115 @@ def send_money():
             flash(str(e), "danger")
 
     return render_template('send_money.html')
+
+
+@app.route('/transaction_summary', methods=['GET', 'POST'])
+def transaction_summary():
+    if 'ssn' not in session:
+        flash('Login required.', 'warning')
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        ssn = session['ssn']
+        start_date = request.form.get('start_date')
+        end_date = request.form.get('end_date')
+
+        try:
+            sent_total = fetch_query("""
+                SELECT COALESCE(SUM(Amount), 0) as total_sent
+                FROM SEND_TRANSACTION
+                WHERE SSN=%s AND L_DTime BETWEEN %s AND %s
+            """, (ssn, start_date, end_date))[0]['total_sent']
+            print(sent_total)
+
+            received_total = fetch_query("""
+                SELECT COALESCE(SUM(Amount), 0) as total_received
+                FROM SEND_TRANSACTION 
+                WHERE Identifier IN (
+                    SELECT Identifier FROM ELEC_ADDRESS WHERE SSN=%s
+                ) AND L_DTime BETWEEN %s AND %s
+            """, (ssn, start_date, end_date))[0]['total_received']
+
+            return render_template(
+                'transaction_summary.html',
+                total_sent=sent_total,
+                total_received=received_total,
+                start_date=start_date,
+                end_date=end_date
+            )
+        except Exception as e:
+            flash(str(e), 'danger')
+
+    return render_template('transaction_summary.html', total_sent=None, total_received=None)
+
+
+@app.route('/transaction_best_users', methods=['GET'])
+def best_users():
+    try:
+        # Query for the best sender
+        best_senders = fetch_query("""
+            SELECT SSN, SUM(Amount) AS total_sent
+            FROM SEND_TRANSACTION
+            GROUP BY SSN
+            ORDER BY total_sent DESC
+            LIMIT 1
+        """)
+
+        # Query for the best receiver (assuming SSN is used in REQUEST_TRANSACTION)
+        best_receivers = fetch_query("""
+            SELECT SSN, SUM(Amount) AS total_received
+            FROM REQUEST_TRANSACTION
+            GROUP BY SSN
+            ORDER BY total_received DESC
+            LIMIT 1
+        """)
+
+        # Handle None values
+        if best_senders and best_senders[0]['total_sent'] is not None:
+            total_sent = float(best_senders[0]['total_sent'])
+        else:
+            total_sent = 0.0
+
+        if best_receivers and best_receivers[0]['total_received'] is not None:
+            total_received = float(best_receivers[0]['total_received'])
+        else:
+            total_received = 0.0
+
+        return render_template(
+            'best_users.html',
+            best_senders=best_senders,
+            best_receivers=best_receivers,
+            total_sent=total_sent,
+            total_received=total_received
+        )
+    except Exception as e:
+        flash(str(e), 'danger')
+
+    return redirect(url_for('dashboard'))
+
+
+@app.route('/transaction_max_per_month', methods=['GET'])
+def max_transaction_per_month():
+    if 'ssn' not in session:
+        flash('Login required.', 'warning')
+        return redirect(url_for('login'))
+
+    try:
+        max_transactions = fetch_query("""
+            SELECT 
+                DATE_FORMAT(L_DTime, '%Y-%m') AS month,
+                MAX(Amount) AS max_amount,
+                Identifier AS recipient
+            FROM SEND_TRANSACTION
+            WHERE SSN=%s
+            GROUP BY month
+        """, (session['ssn'],))
+
+        return render_template('max_transaction_per_month.html', transactions=max_transactions)
+    except Exception as e:
+        flash(str(e), 'danger')
+
+    return redirect(url_for('dashboard'))
 
 @app.route('/request_money', methods=['GET','POST'])
 def request_money():
@@ -465,6 +579,35 @@ def delete_email(email):
         flash(f'Error deleting email: {str(e)}', 'danger')
     
     return redirect(url_for('update_contacts'))
+
+@app.route('/transaction_monthly', methods=['GET'])
+def transaction_monthly():
+    if 'ssn' not in session:
+        flash('Login required.', 'warning')
+        return redirect(url_for('login'))
+
+    try:
+        ssn = session['ssn']
+        monthly_summary = fetch_query("""
+            SELECT 
+                DATE_FORMAT(L_DTime, '%Y-%m') AS month,
+                SUM(CASE WHEN SSN=%s THEN Amount ELSE 0 END) AS total_sent,
+                AVG(CASE WHEN SSN=%s THEN Amount ELSE NULL END) AS avg_sent,
+                SUM(CASE WHEN Identifier IN (
+                    SELECT Identifier FROM ELEC_ADDRESS WHERE SSN=%s
+                ) THEN Amount ELSE 0 END) AS total_received,
+                AVG(CASE WHEN Identifier IN (
+                    SELECT Identifier FROM ELEC_ADDRESS WHERE SSN=%s
+                ) THEN Amount ELSE NULL END) AS avg_received
+            FROM SEND_TRANSACTION
+            GROUP BY month
+        """, (ssn, ssn, ssn, ssn))
+
+        return render_template('transaction_monthly.html', summary=monthly_summary)
+    except Exception as e:
+        flash(str(e), 'danger')
+
+    return redirect(url_for('dashboard'))
 
 @app.route('/logout')
 def logout():
