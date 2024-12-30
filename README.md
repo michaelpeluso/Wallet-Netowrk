@@ -3,6 +3,8 @@
 ## Project Overview
 **Wallet-Network** is a digital wallet application developed for the CS631 course. The system enables users to manage their accounts, perform electronic transactions (send and request), and link external bank accounts. The application is built using Flask for the backend, MySQL for the database, and HTML/Bootstrap for the frontend. It demonstrates the implementation of a robust and scalable payment network.
 
+View the fial report [here](/resources/Final_Report.pdf).
+
 ## Features
 ### Backend Features
 - **User Signup/Login**: Input validation for SSN, email, and phone number, and authentication via SSN.
